@@ -1,20 +1,30 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const START_PORT = Number(process.env.PORT || 3005);
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kochi.one';
+const baseNoSlash = String(API_BASE_URL).replace(/\/$/, '');
+const LOGO_URL =
+  process.env.LOGO_URL || `${baseNoSlash}/aakriti-logo.png`;
+
+const indexHtmlPath = path.join(__dirname, 'index.html');
+const indexHtmlTemplate = fs.readFileSync(indexHtmlPath, 'utf8');
 
 app.use(express.static(__dirname));
 
 app.get('/config.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.send(`window.APP_CONFIG = ${JSON.stringify({ API_BASE_URL })};`);
+  res.send(
+    `window.APP_CONFIG = ${JSON.stringify({ API_BASE_URL, LOGO_URL })};`
+  );
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  const html = indexHtmlTemplate.replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL);
+  res.type('html').send(html);
 });
 
 app.get('/health', (req, res) => {
