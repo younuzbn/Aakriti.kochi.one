@@ -1,0 +1,40 @@
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+
+const app = express();
+const START_PORT = Number(process.env.PORT || 3005);
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kochi.one';
+
+app.use(express.static(__dirname));
+
+app.get('/config.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.send(`window.APP_CONFIG = ${JSON.stringify({ API_BASE_URL })};`);
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', app: 'aakriti.kochi.one' });
+});
+
+function startServer(port, attemptsLeft) {
+  const server = app.listen(port, () => {
+    console.log(`Aakriti site running on http://localhost:${port}`);
+    console.log(`Using API base URL: ${API_BASE_URL}`);
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE' && attemptsLeft > 0) {
+      console.warn(`Port ${port} is in use. Trying ${port + 1}...`);
+      startServer(port + 1, attemptsLeft - 1);
+      return;
+    }
+    throw error;
+  });
+}
+
+startServer(START_PORT, 5);

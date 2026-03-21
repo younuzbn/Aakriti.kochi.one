@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aakriti — Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --text: #1c1917;
+      --muted: #78716c;
+      --line: #e7e5e4;
+      --accent: #1c1917;
+      --accent-hover: #292524;
+      --danger: #b91c1c;
+      --danger-soft: #fef2f2;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+    }
+    * { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Instrument Sans", system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+    .shell {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    header.bar {
+      flex-shrink: 0;
+      height: 56px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .menu-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0;
+      color: var(--text);
+    }
+    .menu-btn:hover { background: var(--bg); }
+    .menu-btn span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: currentColor;
+      border-radius: 1px;
+    }
+    main.stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px 40px;
+    }
+    .panel {
+      width: 100%;
+      max-width: 380px;
+    }
+    .view { display: none; }
+    .view.active { display: block; }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .lead {
+      margin: 0 0 28px;
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .field { margin-bottom: 20px; }
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #a8a29e;
+      box-shadow: 0 0 0 3px rgba(28, 25, 23, 0.06);
+    }
+    .phone-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .phone-row select {
+      flex: 0 0 108px;
+      padding-left: 12px;
+      padding-right: 8px;
+    }
+    .phone-row input { flex: 1; min-width: 0; }
+    .btn {
+      width: 100%;
+      padding: 15px 20px;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      margin-top: 16px;
+    }
+    .btn-ghost:hover { color: var(--text); }
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      margin-top: 20px;
+    }
+    .btn-danger:hover { background: #fee2e2; }
+    .msg {
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .msg.err { color: var(--danger); }
+    .msg.ok { color: #15803d; }
+    .queue-display {
+      text-align: center;
+      padding: 8px 0 12px;
+    }
+    .queue-display .num {
+      font-size: clamp(56px, 18vw, 88px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text);
+    }
+    .queue-display .num.small { font-size: 42px; }
+    .queue-display .sub {
+      margin-top: 16px;
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 25, 23, 0.35);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 80;
+    }
+    .drawer-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(300px, 88vw);
+      height: 100%;
+      background: var(--surface);
+      box-shadow: -8px 0 40px rgba(28, 25, 23, 0.12);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer h2 {
+      margin: 8px 0 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .drawer nav { display: flex; flex-direction: column; gap: 4px; }
+    .drawer a, .drawer button.nav-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .drawer a:hover, .drawer button.nav-item:hover { background: var(--bg); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="bar">
+      <span class="logo">Aakriti</span>
+      <button type="button" class="menu-btn" id="btnOpenMenu" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <h2>Menu</h2>
+      <nav>
+        <button type="button" class="nav-item" id="navNew">New booking</button>
+        <button type="button" class="nav-item" id="navStatus">Check my status</button>
+      </nav>
+    </aside>
+
+    <main class="stage">
+      <div class="panel">
+        <!-- Home: book -->
+        <section class="view active" id="viewHome" aria-labelledby="homeTitle">
+          <h1 id="homeTitle">Book a slot</h1>
+          <p class="lead">Enter your details to join the queue.</p>
+          <div class="field">
+            <label for="mobile">Mobile</label>
+            <div class="phone-row">
+              <select id="mobileCountryCode" aria-label="Country code">
+                <option value="+91" selected>+91</option>
+                <option value="+971">+971</option>
+                <option value="+1">+1</option>
+                <option value="+44">+44</option>
+                <option value="+61">+61</option>
+                <option value="+65">+65</option>
+                <option value="+966">+966</option>
+              </select>
+              <input id="mobile" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="10-digit number" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" type="text" autocomplete="name" placeholder="Your name" />
+          </div>
+          <div class="field">
+            <label for="peopleCount">Number of people</label>
+            <input id="peopleCount" type="number" min="1" max="20" value="1" />
+          </div>
+          <button type="button" class="btn btn-primary" id="btnBook">Book a slot</button>
+          <p class="msg" id="homeMsg" role="status"></p>
+        </section>
+
+        <!-- Check status: mobile only -->
+        <section class="view" id="viewCheck" aria-labelledby="checkTitle">
+          <h1 id="checkTitle">Check my status</h1>
+          <p class="lead">Enter the mobile number you used when booking.</p>
+          <div class="field">
+            <label for="statusMobile">Mobile</label>
+            <div class="phone-row">
+              <select id="statusCountryCode" aria-label="Country code">
+                <option value="+91" selected>+91</option>
+                <option value="+971">+971</option>
+                <option value="+1">+1</option>
+                <option value="+44">+44</option>
+                <option value="+61">+61</option>
+                <option value="+65">+65</option>
+                <option value="+966">+966</option>
+              </select>
+              <input id="statusMobileInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="Phone number" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnContinue">Continue</button>
+          <button type="button" class="btn btn-ghost" id="btnCheckBack">Back</button>
+          <p class="msg" id="checkMsg" role="status"></p>
+        </section>
+
+        <!-- Queue number (after book or check) -->
+        <section class="view" id="viewQueue" aria-labelledby="queueTitle">
+          <h1 id="queueTitle" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Your queue</h1>
+          <div class="queue-display">
+            <div class="num" id="queueLabel">—</div>
+            <p class="sub" id="queueStatus"></p>
+          </div>
+          <button type="button" class="btn btn-danger" id="btnCancel">Cancel booking</button>
+          <p class="msg" id="queueMsg" role="status"></p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/config.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL)
+        ? window.APP_CONFIG.API_BASE_URL
+        : 'https://api.kochi.one';
+      const TOKEN_KEY = 'aakritiToken';
+      const APPOINTMENT_KEY = 'aakritiAppointmentId';
+
+      let currentToken = localStorage.getItem(TOKEN_KEY) || '';
+      let currentAppointmentId = localStorage.getItem(APPOINTMENT_KEY) || '';
+      let socket = null;
+
+      const $ = (id) => document.getElementById(id);
+
+      const views = { home: $('viewHome'), check: $('viewCheck'), queue: $('viewQueue') };
+
+      function showView(name) {
+        Object.keys(views).forEach((k) => views[k].classList.toggle('active', k === name));
+      }
+
+      function setMsg(id, text, cls) {
+        const node = $(id);
+        node.textContent = text || '';
+        node.className = 'msg' + (cls ? ' ' + cls : '');
+      }
+
+      function fullMobile(code, number) {
+        const cleaned = String(number || '').replace(/\s+/g, '').trim();
+        return (String(code || '+91').trim() + cleaned).trim();
+      }
+
+      function nationalDigitCount() {
+        return String($('mobile').value || '').replace(/\D/g, '').length;
+      }
+
+      let lookupTimer = null;
+      let lookupSeq = 0;
+
+      async function fetchLookupByMobile(mobile) {
+        const res = await fetch(API_BASE + '/api/aakriti/lookup?mobile=' + encodeURIComponent(mobile));
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Lookup failed');
+        return json;
+      }
+
+      function scheduleNameLookup() {
+        clearTimeout(lookupTimer);
+        const seq = ++lookupSeq;
+        if (nationalDigitCount() !== 10) return;
+        lookupTimer = setTimeout(async () => {
+          try {
+            if (nationalDigitCount() !== 10) return;
+            const mobile = fullMobile($('mobileCountryCode').value, $('mobile').value);
+            const data = await fetchLookupByMobile(mobile);
+            if (seq !== lookupSeq) return;
+            const n = (data.data && data.data.name) || '';
+            if (n) $('name').value = n;
+          } catch (e) {
+            /* silent — optional new customer */
+          }
+        }, 380);
+      }
+
+      async function api(path, opts) {
+        const headers = Object.assign({}, (opts && opts.headers) || {});
+        if (currentToken) headers['x-aakriti-token'] = currentToken;
+        const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Request failed');
+        return json;
+      }
+
+      function customerStatusMessage(status) {
+        if (status === 'pending') return 'We will call you when it is your turn.';
+        if (status === 'finished') return 'Your visit is complete. Thank you.';
+        if (status === 'unreachable') return 'We could not reach you by phone.';
+        if (status === 'no_show') return 'Recorded as no-show.';
+        if (status === 'cancelled') return 'This booking was cancelled.';
+        return 'This booking is closed.';
+      }
+
+      function formatQueueNum(appt) {
+        const label = appt.queueLabel != null ? appt.queueLabel : (appt.queuePosition === 0 ? 'next' : String(appt.queuePosition));
+        const elNum = $('queueLabel');
+        if (appt.status === 'pending') {
+          elNum.classList.remove('small');
+          elNum.textContent = label;
+        } else {
+          elNum.classList.add('small');
+          elNum.textContent = label;
+        }
+      }
+
+      function renderQueue(appt) {
+        formatQueueNum(appt);
+        $('queueStatus').textContent = customerStatusMessage(appt.status);
+        const canCancel = appt.status === 'pending';
+        $('btnCancel').style.display = canCancel ? 'block' : 'none';
+        setMsg('queueMsg', '');
+      }
+
+      function openDrawer() {
+        $('drawer').classList.add('open');
+        $('drawerBackdrop').classList.add('open');
+        $('drawer').setAttribute('aria-hidden', 'false');
+      }
+
+      function closeDrawer() {
+        $('drawer').classList.remove('open');
+        $('drawerBackdrop').classList.remove('open');
+        $('drawer').setAttribute('aria-hidden', 'true');
+      }
+
+      let watchBound = false;
+      let refreshDebounce = null;
+      let lastBookingRoom = '';
+
+      function clearSession() {
+        if (socket && lastBookingRoom) {
+          socket.emit('leave_aakriti_booking', lastBookingRoom);
+          lastBookingRoom = '';
+        }
+        currentToken = '';
+        currentAppointmentId = '';
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(APPOINTMENT_KEY);
+      }
+
+      function disconnectSocket() {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+          watchBound = false;
+          lastBookingRoom = '';
+        }
+      }
+
+      function applyQueuePayload(payload) {
+        if (!payload || payload.removed) return;
+        const elNum = $('queueLabel');
+        if (payload.status === 'pending') {
+          elNum.classList.remove('small');
+        } else {
+          elNum.classList.add('small');
+        }
+        elNum.textContent = payload.queueLabel != null ? payload.queueLabel : '—';
+        $('queueStatus').textContent = customerStatusMessage(payload.status);
+        $('btnCancel').style.display = payload.status === 'pending' ? 'block' : 'none';
+        setMsg('queueMsg', '');
+      }
+
+      function ensureSocket() {
+        if (socket) return;
+        socket = io(API_BASE, { path: '/socket.io', transports: ['websocket', 'polling'] });
+        socket.on('connect', () => {
+          socket.emit('join_aakriti_watch');
+          if (lastBookingRoom) socket.emit('join_aakriti_booking', lastBookingRoom);
+        });
+        if (!watchBound) {
+          watchBound = true;
+          socket.on('aakriti_changed', () => {
+            if (!currentToken) return;
+            clearTimeout(refreshDebounce);
+            refreshDebounce = setTimeout(async () => {
+              try {
+                const data = await api('/api/aakriti/my-booking');
+                const appt = data.data.appointment;
+                currentAppointmentId = appt.id;
+                localStorage.setItem(APPOINTMENT_KEY, currentAppointmentId);
+                renderQueue(appt);
+                joinBookingRoom(appt.id);
+                if (!views.queue.classList.contains('active')) {
+                  showView('queue');
+                }
+              } catch (e) {
+                disconnectSocket();
+                clearSession();
+                showView('home');
+                setMsg('homeMsg', 'Your booking is no longer active.', 'err');
+              }
+            }, 200);
+          });
+          socket.on('aakriti_queue_update', (payload) => {
+            if (!payload) return;
+            const aid = String(payload.appointmentId || '');
+            if (payload.removed && aid === String(currentAppointmentId)) {
+              disconnectSocket();
+              clearSession();
+              showView('home');
+              setMsg('homeMsg', 'Your booking was removed.', 'err');
+              return;
+            }
+            if (aid !== String(currentAppointmentId)) return;
+            applyQueuePayload(payload);
+          });
+        }
+      }
+
+      function joinBookingRoom(appointmentId) {
+        if (!appointmentId) return;
+        ensureSocket();
+        const id = String(appointmentId);
+        if (lastBookingRoom && lastBookingRoom !== id) {
+          socket.emit('leave_aakriti_booking', lastBookingRoom);
+        }
+        lastBookingRoom = id;
+        socket.emit('join_aakriti_booking', id);
+      }
+
+      function attachSocket(appointmentId) {
+        joinBookingRoom(appointmentId);
+      }
+
+      async function loadSessionBooking() {
+        ensureSocket();
+        if (!currentToken) return false;
+        try {
+          const data = await api('/api/aakriti/my-booking');
+          const appt = data.data.appointment;
+          currentAppointmentId = appt.id;
+          localStorage.setItem(APPOINTMENT_KEY, currentAppointmentId);
+          renderQueue(appt);
+          attachSocket(currentAppointmentId);
+          showView('queue');
+          return true;
+        } catch (e) {
+          disconnectSocket();
+          clearSession();
+          return false;
+        }
+      }
+
+      $('mobile').addEventListener('input', scheduleNameLookup);
+      $('mobileCountryCode').addEventListener('change', scheduleNameLookup);
+
+      $('btnOpenMenu').addEventListener('click', openDrawer);
+      $('drawerBackdrop').addEventListener('click', closeDrawer);
+
+      $('navNew').addEventListener('click', () => {
+        closeDrawer();
+        clearSession();
+        setMsg('homeMsg', '');
+        showView('home');
+      });
+
+      $('navStatus').addEventListener('click', () => {
+        closeDrawer();
+        setMsg('checkMsg', '');
+        $('statusMobileInput').value = '';
+        showView('check');
+      });
+
+      $('btnCheckBack').addEventListener('click', () => {
+        setMsg('checkMsg', '');
+        if (currentToken) {
+          showView('queue');
+        } else {
+          showView('home');
+        }
+      });
+
+      $('btnBook').addEventListener('click', async () => {
+        setMsg('homeMsg', '');
+        try {
+          const payload = {
+            name: $('name').value.trim(),
+            mobile: fullMobile($('mobileCountryCode').value, $('mobile').value),
+            peopleCount: Number($('peopleCount').value || 1),
+            notes: ''
+          };
+          if (!payload.name || !payload.mobile || payload.mobile.length < 8) {
+            setMsg('homeMsg', 'Please enter your name and a valid mobile number.', 'err');
+            return;
+          }
+          if (!Number.isFinite(payload.peopleCount) || payload.peopleCount < 1) {
+            setMsg('homeMsg', 'Please enter number of people (at least 1).', 'err');
+            return;
+          }
+          const data = await api('/api/aakriti/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const appt = data.data.appointment;
+          currentToken = data.data.token;
+          currentAppointmentId = appt.id;
+          localStorage.setItem(TOKEN_KEY, currentToken);
+          localStorage.setItem(APPOINTMENT_KEY, currentAppointmentId);
+          renderQueue(appt);
+          attachSocket(currentAppointmentId);
+          showView('queue');
+        } catch (e) {
+          setMsg('homeMsg', e.message, 'err');
+        }
+      });
+
+      $('btnContinue').addEventListener('click', async () => {
+        setMsg('checkMsg', '');
+        try {
+          const mobile = fullMobile($('statusCountryCode').value, $('statusMobileInput').value);
+          if (!mobile || mobile.length < 8) {
+            setMsg('checkMsg', 'Enter your mobile number.', 'err');
+            return;
+          }
+          const data = await api('/api/aakriti/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobile })
+          });
+          currentToken = data.data.token;
+          const appt = data.data.appointment;
+          currentAppointmentId = appt.id;
+          localStorage.setItem(TOKEN_KEY, currentToken);
+          localStorage.setItem(APPOINTMENT_KEY, currentAppointmentId);
+          renderQueue(appt);
+          attachSocket(currentAppointmentId);
+          showView('queue');
+        } catch (e) {
+          setMsg('checkMsg', e.message, 'err');
+        }
+      });
+
+      $('btnCancel').addEventListener('click', async () => {
+        if (!confirm('Cancel this booking and leave the queue?')) return;
+        setMsg('queueMsg', '');
+        try {
+          await api('/api/aakriti/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          clearSession();
+          setMsg('homeMsg', 'Your booking has been cancelled.', 'ok');
+          showView('home');
+        } catch (e) {
+          setMsg('queueMsg', e.message, 'err');
+        }
+      });
+
+      ensureSocket();
+      loadSessionBooking().then((ok) => {
+        if (!ok) showView('home');
+      });
+    })();
+  </script>
+</body>
+</html>
