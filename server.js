@@ -13,8 +13,8 @@ const LOGO_URL =
 const indexHtmlPath = path.join(__dirname, 'index.html');
 const indexHtmlTemplate = fs.readFileSync(indexHtmlPath, 'utf8');
 
-app.use(express.static(__dirname));
-
+// Register / and /config.js before express.static — otherwise static serves
+// index.html for GET / and {{AAKRITI_LOGO_SRC}} is never replaced.
 app.get('/config.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   res.send(
@@ -30,6 +30,8 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', app: 'aakriti.kochi.one' });
 });
+
+app.use(express.static(__dirname, { index: false }));
 
 function startServer(port, attemptsLeft) {
   const server = app.listen(port, () => {
