@@ -9,13 +9,17 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kochi.one';
 const baseNoSlash = String(API_BASE_URL).replace(/\/$/, '');
 const LOGO_URL =
   process.env.LOGO_URL || `${baseNoSlash}/aakriti-logo.png`;
+const HERO_URL =
+  process.env.HERO_URL || `${baseNoSlash}/24070720_bwink_b_f_01_single_01.jpg`;
 
 const indexHtmlPath = path.join(__dirname, 'index.html');
 const loginHtmlPath = path.join(__dirname, 'login.html');
 
 function sendIndexPage(res) {
   const raw = fs.readFileSync(indexHtmlPath, 'utf8');
-  const html = raw.replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL);
+  const html = raw
+    .replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL)
+    .replace(/\{\{AAKRITI_HERO_SRC\}\}/g, HERO_URL);
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.type('html').send(html);
 }
