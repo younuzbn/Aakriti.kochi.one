@@ -11,7 +11,22 @@ const LOGO_URL =
   process.env.LOGO_URL || `${baseNoSlash}/aakriti-logo.png`;
 
 const indexHtmlPath = path.join(__dirname, 'index.html');
-const indexHtmlTemplate = fs.readFileSync(indexHtmlPath, 'utf8');
+const loginHtmlPath = path.join(__dirname, 'login.html');
+
+function sendIndexPage(res) {
+  const raw = fs.readFileSync(indexHtmlPath, 'utf8');
+  const html = raw.replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.type('html').send(html);
+}
+
+function sendLoginPage(res) {
+  // Read from disk each time so edits to login.html apply without restarting the server.
+  const raw = fs.readFileSync(loginHtmlPath, 'utf8');
+  const html = raw.replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.type('html').send(html);
+}
 
 // Register / and /config.js before express.static — otherwise static serves
 // index.html for GET / and {{AAKRITI_LOGO_SRC}} is never replaced.
@@ -22,10 +37,11 @@ app.get('/config.js', (req, res) => {
   );
 });
 
-app.get('/', (req, res) => {
-  const html = indexHtmlTemplate.replace(/\{\{AAKRITI_LOGO_SRC\}\}/g, LOGO_URL);
-  res.type('html').send(html);
-});
+app.get('/', (req, res) => sendIndexPage(res));
+
+/** Staff / salon admin login (API auth on kochi_one_server). */
+app.get('/login', (req, res) => sendLoginPage(res));
+app.get('/aakriti/login', (req, res) => sendLoginPage(res));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', app: 'aakriti.kochi.one' });

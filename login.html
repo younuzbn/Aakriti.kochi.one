@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aakriti — Staff &amp; admin sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --nav: #23292c;
+      --bg-top: #f5f5f5;
+      --bg-bottom: #ebebeb;
+      --panel: #ffffff;
+      --border: #e5e5e5;
+      --input-border: #d4d4d4;
+      --text: #0a0a0a;
+      --muted: #737373;
+      --primary: #23292c;
+      --primary-hover: #1a1f22;
+      --accent-ring: rgba(35, 41, 44, 0.22);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: "DM Sans", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: linear-gradient(165deg, var(--bg-top) 0%, var(--bg-bottom) 52%, #e0e0e0 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 420px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 12px 40px rgba(10, 10, 10, 0.08);
+      overflow: hidden;
+    }
+    .head {
+      background: var(--nav);
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .head img { height: 52px; width: auto; max-width: 100%; object-fit: contain; }
+    .head p { margin: 12px 0 0; color: rgba(255,255,255,0.75); font-size: 14px; }
+    .body { padding: 28px 24px 32px; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font: inherit;
+      font-size: 15px;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--accent-ring);
+    }
+    .btn {
+      width: 100%;
+      cursor: pointer;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+    .btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .err {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      font-size: 14px;
+    }
+    .back {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .back:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="head">
+      <img src="{{AAKRITI_LOGO_SRC}}" alt="Aakriti Boutique &amp; Makeup Studio" />
+      <p>Staff or admin — queue dashboard</p>
+    </div>
+    <div class="body">
+      <div id="err" class="err"></div>
+      <form id="form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" placeholder="Admin or staff username" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn" id="btn">Sign in</button>
+      </form>
+
+      <a class="back" href="/">← Back to booking</a>
+    </div>
+  </div>
+  <script src="/config.js"></script>
+  <script>
+    (function(){
+      function apiBase() {
+        var c = window.APP_CONFIG || {};
+        var b = String(c.API_BASE_URL || '').trim().replace(/\/$/, '');
+        if (!b) {
+          console.error('APP_CONFIG.API_BASE_URL missing');
+          return '';
+        }
+        return b;
+      }
+      function portal(path) {
+        return apiBase() + path;
+      }
+
+      var form = document.getElementById('form');
+      var err = document.getElementById('err');
+      var btn = document.getElementById('btn');
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        err.style.display = 'none';
+        if (!apiBase()) {
+          err.textContent = 'Missing API_BASE_URL. Set it in .env for this site.';
+          err.style.display = 'block';
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Signing in…';
+        try {
+          var res = await fetch(portal('/api/aakriti/portal/login'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: document.getElementById('username').value,
+              password: document.getElementById('password').value
+            })
+          });
+          var j = await res.json().catch(function(){ return {}; });
+          if (!res.ok || j.status !== 'success') {
+            if (res.status === 404 || (j.message && String(j.message).indexOf('Route not found') !== -1)) {
+              throw new Error(
+                'API route not found. For local dev set API_BASE_URL=http://localhost:3000 in .env and run kochi_one_server. ' +
+                'If using a public API URL, deploy the latest server so /api/aakriti/portal/login exists.'
+              );
+            }
+            throw new Error(j.message || 'Sign in failed');
+          }
+          var token = j.data.token;
+          var returnLogin = window.location.origin + '/login';
+          window.location.href = portal('/aakriti/dashboard') +
+            '?setToken=' + encodeURIComponent(token) +
+            '&returnLogin=' + encodeURIComponent(returnLogin);
+        } catch (x) {
+          err.textContent = x.message || 'Sign in failed';
+          err.style.display = 'block';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Sign in';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
