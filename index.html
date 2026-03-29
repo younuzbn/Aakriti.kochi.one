@@ -1252,7 +1252,7 @@
 
       const views = { home: $('viewHome'), check: $('viewCheck'), queue: $('viewQueue') };
       const _splashStart = Date.now();
-      const _splashMinMs = 1400; // ensure logo bounce finishes before exit
+      const _splashMinMs = 2000; // minimum 2s so the bounce always finishes before exit
       function hideBootLoader() {
         const loader = $('bootLoader');
         document.body.classList.remove('app-loading');
