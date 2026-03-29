@@ -1046,7 +1046,7 @@
             </div>
           </div>
           <div id="guestsSection" class="guests-section"></div>
-          <div class="field" style="margin-top: 10px;">
+          <div class="field" id="preferredDateField" style="margin-top: 10px;">
             <label class="field-label-wrap">
               <span class="field-label-text">Preferred date <span class="opt">(optional)</span></span>
               <div class="date-composite">
@@ -1248,6 +1248,14 @@
         }
       }
 
+      function todayYmd() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
       function applyBookingSettings(s) {
         // Booking closed banner
         const banner = $('bookingClosedBanner');
@@ -1263,9 +1271,20 @@
           if (banner) banner.style.display = 'none';
           if (btnBook) { btnBook.disabled = false; btnBook.style.opacity = ''; }
         }
-        // Re-init date picker with correct maxDate
-        const maxDate = advanceLimitToMaxDate(s.advanceBookingLimit);
-        initPreferredDatePicker({ maxDate });
+
+        // Same-day mode: hide the date field and destroy the picker
+        const dateField = $('preferredDateField');
+        if (s.advanceBookingLimit === 'same_day') {
+          if (dateField) dateField.style.display = 'none';
+          if (preferredDatePicker) {
+            preferredDatePicker.destroy();
+            preferredDatePicker = null;
+          }
+        } else {
+          if (dateField) dateField.style.display = '';
+          const maxDate = advanceLimitToMaxDate(s.advanceBookingLimit);
+          initPreferredDatePicker({ maxDate });
+        }
       }
 
       let selectedGender = 'male';
@@ -1669,7 +1688,9 @@
             peopleCount: Number($('peopleCount').value || 1),
             guests: collectGuests(),
             notes: ($('bookingNotes') && $('bookingNotes').value) ? $('bookingNotes').value.trim() : '',
-            preferredDate: $('preferredDate') && $('preferredDate').value ? $('preferredDate').value : ''
+            preferredDate: bookingSettings.advanceBookingLimit === 'same_day'
+              ? todayYmd()
+              : ($('preferredDate') && $('preferredDate').value ? $('preferredDate').value : '')
           };
 
           const errors = [];
