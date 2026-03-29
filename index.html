@@ -74,21 +74,41 @@
       animation: splashBgOut 0.55s ease 0.08s forwards;
       pointer-events: none;
     }
-    .boot-loader.exiting .boot-loader-logo {
+    .boot-loader.exiting .splash-duo {
       animation: splashLogoOut 0.5s ease-in forwards;
     }
     .boot-loader-inner {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
-    .boot-loader-logo {
-      height: 88px;
-      width: auto;
-      max-width: min(360px, 76vw);
-      object-fit: contain;
+    .splash-duo {
+      display: flex;
+      align-items: center;
+      gap: clamp(14px, 4vw, 28px);
       animation: splashLogoIn 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+    }
+    .splash-crest {
+      height: clamp(72px, 20vw, 108px);
+      width: auto;
+      object-fit: contain;
+      mix-blend-mode: lighten;
+      flex-shrink: 0;
+    }
+    .splash-divider {
+      width: 1px;
+      height: clamp(52px, 14vw, 78px);
+      background: rgba(210, 166, 80, 0.45);
+      flex-shrink: 0;
+      border-radius: 1px;
+    }
+    .splash-wordmark {
+      height: clamp(52px, 14vw, 78px);
+      width: auto;
+      max-width: clamp(160px, 44vw, 280px);
+      object-fit: contain;
+      mix-blend-mode: lighten;
+      flex-shrink: 0;
     }
     .shell {
       min-height: 100dvh;
@@ -942,7 +962,11 @@
 <body class="app-loading">
   <div class="boot-loader" id="bootLoader" aria-label="Loading Aakriti">
     <div class="boot-loader-inner">
-      <img class="boot-loader-logo" src="{{AAKRITI_LOGO_SRC}}" alt="Aakriti Boutique and Makeup Studio" />
+      <div class="splash-duo">
+        <img class="splash-crest" src="{{AAKRITI_CREST_SRC}}" alt="" decoding="async" />
+        <div class="splash-divider"></div>
+        <img class="splash-wordmark" src="{{AAKRITI_WORDMARK_SRC}}" alt="Aakriti Boutique and Makeup Studio" decoding="async" />
+      </div>
     </div>
   </div>
   <div class="shell">
