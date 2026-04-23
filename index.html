@@ -644,6 +644,27 @@
     }
     .gender-mini-btn.active { background: var(--nav); color: #fff; }
     .gender-mini-btn:hover:not(.active) { background: #f0f1f2; color: var(--text); }
+    .stylist-select {
+      width: 100%;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .stylist-select:focus {
+      border-color: var(--header-top);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+    .stylist-hint {
+      margin: 7px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
     /* Guest additional people — line separator only, no card */
     .req-star { color: #e53e3e; margin-left: 2px; }
     .field-error { border-color: #e53e3e !important; box-shadow: 0 0 0 3px rgba(229,62,62,.15) !important; }
@@ -1041,6 +1062,13 @@
               </div>
             </div>
           </div>
+          <div class="field">
+            <label for="preferredStylistName">Preferred stylist <span class="opt">(optional)</span></label>
+            <select id="preferredStylistName" class="stylist-select" aria-label="Preferred stylist">
+              <option value="">No preference</option>
+            </select>
+            <p class="stylist-hint" id="preferredStylistHint">Stylists will load based on selected gender.</p>
+          </div>
           <div id="guestsSection" class="guests-section"></div>
           <div class="field" id="preferredDateField" style="margin-top: 10px;">
             <label class="field-label-wrap">
@@ -1284,12 +1312,57 @@
       }
 
       let selectedGender = 'male';
+      const preferredStylistsByGender = { male: null, female: null };
+
+      function renderPreferredStylistOptions(gender, names, preserveSelection) {
+        const selectEl = $('preferredStylistName');
+        if (!selectEl) return;
+        const hintEl = $('preferredStylistHint');
+        const current = preserveSelection ? String(selectEl.value || '') : '';
+        selectEl.innerHTML = `<option value="">No preference</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}`;
+        if (current && names.includes(current)) {
+          selectEl.value = current;
+        } else {
+          selectEl.value = '';
+        }
+        if (hintEl) {
+          if (!names.length) {
+            hintEl.textContent = gender === 'female'
+              ? 'No active ladies stylists are available right now.'
+              : 'No active gents stylists are available right now.';
+          } else {
+            hintEl.textContent = `${names.length} ${gender === 'female' ? 'ladies' : 'gents'} stylist${names.length === 1 ? '' : 's'} available.`;
+          }
+        }
+      }
+
+      async function loadPreferredStylists(gender, preserveSelection) {
+        if (!['male', 'female'].includes(gender)) return;
+        try {
+          if (!Array.isArray(preferredStylistsByGender[gender])) {
+            const res = await fetch(API_BASE + '/api/aakriti/staff-members?gender=' + encodeURIComponent(gender));
+            const json = await res.json();
+            if (!res.ok) throw new Error((json && json.message) || 'Failed to load stylists');
+            const names = Array.isArray(json?.data?.staff)
+              ? json.data.staff.map((s) => String(s?.name || '').trim()).filter(Boolean)
+              : [];
+            preferredStylistsByGender[gender] = [...new Set(names)].sort((a, b) => a.localeCompare(b));
+          }
+          renderPreferredStylistOptions(gender, preferredStylistsByGender[gender], preserveSelection);
+        } catch (e) {
+          renderPreferredStylistOptions(gender, [], false);
+          const hintEl = $('preferredStylistHint');
+          if (hintEl) hintEl.textContent = 'Could not load stylist list right now. You can continue without selecting one.';
+        }
+      }
+
       function setGender(g) {
         selectedGender = g;
         // Update main person mini buttons
         document.querySelectorAll('.gender-mini-btn[data-gender]').forEach(btn => {
           btn.classList.toggle('active', btn.getAttribute('data-gender') === g);
         });
+        loadPreferredStylists(g, true);
       }
 
       function buildGuestFields(n) {
@@ -1641,6 +1714,8 @@
         resetPreferredDateToToday();
         setPeopleCount(1);
         setGender('male');
+        const prefStylist = $('preferredStylistName');
+        if (prefStylist) prefStylist.value = '';
         const bn = $('bookingNotes');
         if (bn) bn.value = '';
         showView('home');
@@ -1677,6 +1752,9 @@
             mobile: fullMobile($('mobileCountryCode').value, $('mobile').value),
             peopleCount: Number($('peopleCount').value || 1),
             guests: collectGuests(),
+            preferredStylistName: ($('preferredStylistName') && $('preferredStylistName').value)
+              ? $('preferredStylistName').value
+              : '',
             notes: ($('bookingNotes') && $('bookingNotes').value) ? $('bookingNotes').value.trim() : '',
             preferredDate: bookingSettings.advanceBookingLimit === 'same_day'
               ? todayYmd()
@@ -1785,6 +1863,8 @@
             resetPreferredDateToToday();
             setPeopleCount(1);
             setGender('male');
+            const prefStylist = $('preferredStylistName');
+            if (prefStylist) prefStylist.value = '';
             const bn = $('bookingNotes');
             if (bn) bn.value = '';
             showView('home');
@@ -1798,6 +1878,7 @@
       })();
 
       initPreferredDatePicker();
+      loadPreferredStylists(selectedGender, false);
 
       ensureSocket();
       loadBookingSettings();
