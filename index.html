@@ -649,10 +649,18 @@
       border: 1px solid var(--input-border);
       border-radius: var(--radius);
       background: #fff;
-      padding: 13px 14px;
+      min-height: 48px;
+      line-height: 1.25;
+      padding: 11px 44px 11px 14px;
       font: inherit;
       font-size: 15px;
       color: var(--text);
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 12px 8px;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
@@ -1063,7 +1071,7 @@
             </div>
           </div>
           <div class="field">
-            <label for="preferredStylistName">Preferred stylist <span class="opt">(optional)</span></label>
+            <label for="preferredStylistName">Preferred stylist</label>
             <select id="preferredStylistName" class="stylist-select" aria-label="Preferred stylist">
               <option value="">No preference</option>
             </select>
