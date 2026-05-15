@@ -664,6 +664,12 @@
       letter-spacing: 0.06em;
       margin: 0;
     }
+    .person-stylist-field {
+      margin-top: 10px;
+    }
+    .person-stylist-field label {
+      margin-bottom: 6px;
+    }
     .drawer-backdrop {
       position: fixed;
       inset: 0;
@@ -1071,8 +1077,8 @@
               </div>
             </div>
           </div>
-          <div class="field" id="preferredStylistField">
-            <label for="preferredStylistName">Preferred stylist <span class="opt">(optional)</span></label>
+          <div class="field person-stylist-field" id="preferredStylistField">
+            <label for="preferredStylistName">Preferred stylist</label>
             <select id="preferredStylistName" class="booking-stylist-select" aria-label="Preferred stylist">
               <option value="">No preference</option>
             </select>
@@ -1081,7 +1087,7 @@
           <div id="guestsSection" class="guests-section"></div>
           <div class="field" id="preferredDateField" style="margin-top: 10px;">
             <label class="field-label-wrap">
-              <span class="field-label-text">Preferred date <span class="opt">(optional)</span></span>
+              <span class="field-label-text">Preferred date</span>
               <div class="date-composite">
                 <input id="preferredDate" type="text" readonly autocomplete="off" placeholder="" aria-hidden="true" tabindex="-1" />
               </div>
@@ -1336,12 +1342,11 @@
         return stylistStaffByGender[g];
       }
 
-      async function refreshPreferredStylistSelect(gender, preserveCurrent) {
-        const g = gender === 'female' ? 'female' : 'male';
-        const selectEl = $('preferredStylistName');
-        const hintEl = $('preferredStylistHint');
+      async function populateStylistSelect(selectEl, gender, preserveCurrent) {
         if (!selectEl) return;
-        const existing = preserveCurrent ? String(selectEl.value || '') : '';
+        const g = gender === 'female' ? 'female' : 'male';
+        const existing = preserveCurrent ? String(selectEl.value || selectEl.getAttribute('data-preserve-stylist') || '') : '';
+        if (selectEl.hasAttribute('data-preserve-stylist')) selectEl.removeAttribute('data-preserve-stylist');
         try {
           const list = await loadStylistStaff(g);
           let names = list.map((x) => String(x.name || '').trim()).filter(Boolean);
@@ -1349,6 +1354,20 @@
           selectEl.innerHTML = '<option value="">No preference</option>' +
             names.map((name) => '<option value="' + esc(name) + '">' + esc(name) + '</option>').join('');
           selectEl.value = (existing && names.includes(existing)) ? existing : '';
+        } catch (e) {
+          selectEl.innerHTML = '<option value="">No preference</option>';
+          selectEl.value = '';
+        }
+      }
+
+      async function refreshPrimaryStylistSelect(gender, preserveCurrent) {
+        const g = gender === 'female' ? 'female' : 'male';
+        const selectEl = $('preferredStylistName');
+        const hintEl = $('preferredStylistHint');
+        if (!selectEl) return;
+        try {
+          await populateStylistSelect(selectEl, g, preserveCurrent);
+          const names = Array.from(selectEl.options).map((o) => o.value).filter(Boolean);
           if (hintEl) {
             if (!names.length) {
               hintEl.textContent = g === 'female'
@@ -1367,10 +1386,29 @@
 
       function setGender(g) {
         selectedGender = g;
-        document.querySelectorAll('.gender-mini-btn[data-gender]').forEach(btn => {
+        document.querySelectorAll('#viewHome .gender-mini-btn[data-gender]').forEach(btn => {
+          if (btn.closest('#guestsSection')) return;
           btn.classList.toggle('active', btn.getAttribute('data-gender') === g);
         });
-        refreshPreferredStylistSelect(g, true).catch(() => {});
+        refreshPrimaryStylistSelect(g, true).catch(() => {});
+      }
+
+      function wireGuestBlocks(sec) {
+        if (!sec) return;
+        sec.querySelectorAll('.guest-block').forEach((block) => {
+          const selectEl = block.querySelector('.guest-stylist-select');
+          const activeBtn = block.querySelector('.guest-gender-btn.active');
+          const gender = activeBtn ? activeBtn.getAttribute('data-gender') : 'male';
+          populateStylistSelect(selectEl, gender, true).catch(() => {});
+          block.querySelectorAll('.guest-gender-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const wrap = btn.closest('.gender-mini-wrap');
+              wrap.querySelectorAll('.guest-gender-btn').forEach((b) => b.classList.remove('active'));
+              btn.classList.add('active');
+              populateStylistSelect(selectEl, btn.getAttribute('data-gender'), true).catch(() => {});
+            });
+          });
+        });
       }
 
       function buildGuestFields(n) {
@@ -1382,6 +1420,9 @@
           const existing = sec.querySelector(`[data-guest="${i}"]`);
           const prevName = existing ? existing.querySelector('.guest-name-input').value : '';
           const prevGender = existing ? (existing.querySelector('.guest-gender-btn.active') || {}).dataset?.gender || 'male' : 'male';
+          const prevStylist = existing && existing.querySelector('.guest-stylist-select')
+            ? existing.querySelector('.guest-stylist-select').value
+            : '';
           html += `<div class="guest-block" data-guest="${i}">
             <p class="guest-block-title">Person ${i}</p>
             <div class="name-gender-combo">
@@ -1391,26 +1432,29 @@
                 <button type="button" class="gender-mini-btn guest-gender-btn${prevGender === 'female' ? ' active' : ''}" data-gender="female">Female</button>
               </div>
             </div>
+            <div class="person-stylist-field">
+              <label>Preferred stylist</label>
+              <select class="booking-stylist-select guest-stylist-select" aria-label="Preferred stylist for person ${i}" data-preserve-stylist="${prevStylist.replace(/"/g, '&quot;')}">
+                <option value="">No preference</option>
+              </select>
+            </div>
           </div>`;
         }
         sec.innerHTML = html;
-        sec.querySelectorAll('.guest-gender-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const wrap = btn.closest('.gender-mini-wrap');
-            wrap.querySelectorAll('.guest-gender-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-          });
-        });
-        // Focus ring is handled by .name-gender-combo:focus-within in CSS
+        wireGuestBlocks(sec);
       }
 
       function collectGuests() {
         const sec = $('guestsSection');
         if (!sec) return [];
-        return Array.from(sec.querySelectorAll('.guest-block')).map(block => ({
-          name: (block.querySelector('.guest-name-input').value || '').trim(),
-          gender: (block.querySelector('.guest-gender-btn.active') || {}).dataset?.gender || 'male'
-        }));
+        return Array.from(sec.querySelectorAll('.guest-block')).map(block => {
+          const stylistEl = block.querySelector('.guest-stylist-select');
+          return {
+            name: (block.querySelector('.guest-name-input').value || '').trim(),
+            gender: (block.querySelector('.guest-gender-btn.active') || {}).dataset?.gender || 'male',
+            preferredStylistName: stylistEl ? (stylistEl.value || '').trim() : ''
+          };
+        });
       }
 
       const PEOPLE_MIN = 1;
@@ -1886,7 +1930,7 @@
       })();
 
       initPreferredDatePicker();
-      refreshPreferredStylistSelect('male', false).catch(() => {});
+      refreshPrimaryStylistSelect('male', false).catch(() => {});
 
       ensureSocket();
       loadBookingSettings();
