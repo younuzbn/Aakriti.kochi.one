@@ -963,6 +963,36 @@
       color: #92400e;
       line-height: 1.45;
     }
+    .booking-stylist-select {
+      width: 100%;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+      padding-right: 40px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .booking-stylist-select:focus {
+      outline: none;
+      border-color: var(--header-top);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+    .booking-stylist-hint {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body class="app-loading">
@@ -1040,6 +1070,13 @@
                 <button type="button" class="gender-mini-btn" data-gender="female">Female</button>
               </div>
             </div>
+          </div>
+          <div class="field" id="preferredStylistField">
+            <label for="preferredStylistName">Preferred stylist <span class="opt">(optional)</span></label>
+            <select id="preferredStylistName" class="booking-stylist-select" aria-label="Preferred stylist">
+              <option value="">No preference</option>
+            </select>
+            <p class="booking-stylist-hint" id="preferredStylistHint">Stylists load by selected gender.</p>
           </div>
           <div id="guestsSection" class="guests-section"></div>
           <div class="field" id="preferredDateField" style="margin-top: 10px;">
@@ -1284,12 +1321,56 @@
       }
 
       let selectedGender = 'male';
+      const stylistStaffByGender = { male: [], female: [] };
+
+      async function loadStylistStaff(gender) {
+        const g = gender === 'female' ? 'female' : 'male';
+        if (stylistStaffByGender[g].length) return stylistStaffByGender[g];
+        const res = await fetch(API_BASE + '/api/aakriti/staff-members?gender=' + encodeURIComponent(g));
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || 'Failed to load stylists');
+        const rows = (json.data && Array.isArray(json.data.staff)) ? json.data.staff : [];
+        stylistStaffByGender[g] = rows
+          .map((x) => (typeof x === 'string' ? { name: x } : { name: x && x.name ? String(x.name) : '' }))
+          .filter((x) => !!x.name);
+        return stylistStaffByGender[g];
+      }
+
+      async function refreshPreferredStylistSelect(gender, preserveCurrent) {
+        const g = gender === 'female' ? 'female' : 'male';
+        const selectEl = $('preferredStylistName');
+        const hintEl = $('preferredStylistHint');
+        if (!selectEl) return;
+        const existing = preserveCurrent ? String(selectEl.value || '') : '';
+        try {
+          const list = await loadStylistStaff(g);
+          let names = list.map((x) => String(x.name || '').trim()).filter(Boolean);
+          names = [...new Set(names)].sort((a, b) => a.localeCompare(b));
+          selectEl.innerHTML = '<option value="">No preference</option>' +
+            names.map((name) => '<option value="' + esc(name) + '">' + esc(name) + '</option>').join('');
+          selectEl.value = (existing && names.includes(existing)) ? existing : '';
+          if (hintEl) {
+            if (!names.length) {
+              hintEl.textContent = g === 'female'
+                ? 'No active ladies stylists are available right now.'
+                : 'No active gents stylists are available right now.';
+            } else {
+              hintEl.textContent = names.length + ' ' + (g === 'female' ? 'ladies' : 'gents') + ' stylist' + (names.length === 1 ? '' : 's') + ' available.';
+            }
+          }
+        } catch (e) {
+          selectEl.innerHTML = '<option value="">No preference</option>';
+          selectEl.value = '';
+          if (hintEl) hintEl.textContent = 'Could not load stylists right now. Continue without selecting one.';
+        }
+      }
+
       function setGender(g) {
         selectedGender = g;
-        // Update main person mini buttons
         document.querySelectorAll('.gender-mini-btn[data-gender]').forEach(btn => {
           btn.classList.toggle('active', btn.getAttribute('data-gender') === g);
         });
+        refreshPreferredStylistSelect(g, true).catch(() => {});
       }
 
       function buildGuestFields(n) {
@@ -1641,6 +1722,8 @@
         resetPreferredDateToToday();
         setPeopleCount(1);
         setGender('male');
+        const prefStylist = $('preferredStylistName');
+        if (prefStylist) prefStylist.value = '';
         const bn = $('bookingNotes');
         if (bn) bn.value = '';
         showView('home');
@@ -1680,7 +1763,10 @@
             notes: ($('bookingNotes') && $('bookingNotes').value) ? $('bookingNotes').value.trim() : '',
             preferredDate: bookingSettings.advanceBookingLimit === 'same_day'
               ? todayYmd()
-              : ($('preferredDate') && $('preferredDate').value ? $('preferredDate').value : '')
+              : ($('preferredDate') && $('preferredDate').value ? $('preferredDate').value : ''),
+            preferredStylistName: ($('preferredStylistName') && $('preferredStylistName').value)
+              ? $('preferredStylistName').value.trim()
+              : ''
           };
 
           const errors = [];
@@ -1785,6 +1871,8 @@
             resetPreferredDateToToday();
             setPeopleCount(1);
             setGender('male');
+            const prefStylist = $('preferredStylistName');
+            if (prefStylist) prefStylist.value = '';
             const bn = $('bookingNotes');
             if (bn) bn.value = '';
             showView('home');
@@ -1798,6 +1886,7 @@
       })();
 
       initPreferredDatePicker();
+      refreshPreferredStylistSelect('male', false).catch(() => {});
 
       ensureSocket();
       loadBookingSettings();
