@@ -5,7 +5,7 @@ const path = require('path');
 
 const app = express();
 const START_PORT = Number(process.env.PORT || 3005);
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.kochi.one';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://aakriti-api.kochi.one';
 const baseNoSlash = String(API_BASE_URL).replace(/\/$/, '');
 const LOGO_URL =
   process.env.LOGO_URL || `${baseNoSlash}/aakriti-logo.png`;
